@@ -222,7 +222,7 @@ async def main(submission_id, assignment_id, user_id):
     # Configuration
     ASSIGNMENT_ID=submission_id
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # Replace with your actual API key
-    SCREENSHOTS_FOLDER = f"screenshots/{ASSIGNMENT_ID}"
+    SCREENSHOTS_FOLDER = f"/tmp/screenshots/{ASSIGNMENT_ID}"
     RESULTS_FILE = f"analysis/{ASSIGNMENT_ID}.json"
     IMAGE_RANGE = [0, 2200]  # Specify which images to process (adjust as needed)
     MAX_CONCURRENT_REQUESTS = 60  # Adjust based on your API limits

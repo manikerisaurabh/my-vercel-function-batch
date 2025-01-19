@@ -21,7 +21,7 @@ s3 = boto3.client(
 )
 
 def upload_files_to_s3(submission_id):
-    LOCAL_FOLDER = f"timeline_analysis/{submission_id}"
+    LOCAL_FOLDER = f"/tmp/timeline_analysis/{submission_id}"
     try:
         # Iterate through all files in the specified local folder
         for root, dirs, files in os.walk(LOCAL_FOLDER):
@@ -48,10 +48,10 @@ def upload_files_to_s3(submission_id):
 def delete_local_json_files(submission_id):
     # Paths of the directories and file to delete
     dirs_to_delete = [
-        f"screenshots/{submission_id}",
-        f"timeline_analysis/{submission_id}",
+        f"/tmp/screenshots/{submission_id}",
+        f"/tp/timeline_analysis/{submission_id}",
     ]
-    file_to_delete = f"analysis/{submission_id}.json"
+    file_to_delete = f"/tmp/analysis/{submission_id}.json"
 
     # Delete JSON files in the directories
     for dir_path in dirs_to_delete:

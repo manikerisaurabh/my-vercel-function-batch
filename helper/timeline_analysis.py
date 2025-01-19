@@ -113,7 +113,7 @@ def save_activity_durations(file_path, output, assignment_id, user_id, submissio
     
     # Get the file name without extension
     base_name = file_path.rsplit('.', 1)[0]
-    activities_file = f"timeline_analysis/{submission_id}/{assignment_id}_{user_id}_time_spent.json"
+    activities_file = f"/tmp/timeline_analysis/{submission_id}/{assignment_id}_{user_id}_time_spent.json"
     
     # Convert seconds to minutes for all activities
     activity_minutes = {
@@ -150,7 +150,7 @@ def save_activity_durations(file_path, output, assignment_id, user_id, submissio
 def save_raw_prompts(file_path, output, assignment_id, user_id, submission_id):
     """Save raw prompts timeline without any processing"""
     base_name = file_path.rsplit('.', 1)[0]
-    raw_prompts_file = f"timeline_analysis/{submission_id}/{assignment_id}_{user_id}_raw_prompts.json"
+    raw_prompts_file = f"/tmp/timeline_analysis/{submission_id}/{assignment_id}_{user_id}_raw_prompts.json"
     
     # Extract just the prompts timeline without any processing
     raw_prompts_data = {
@@ -168,7 +168,7 @@ def save_raw_prompts(file_path, output, assignment_id, user_id, submission_id):
 def save_app_actions(file_path, output, assignment_id, user_id, submission_id):
     """Save app and action timeline without consecutive duplicates"""
     base_name = file_path.rsplit('.', 1)[0]
-    app_actions_file = f"timeline_analysis/{submission_id}/{assignment_id}_{user_id}_app_actions.json"
+    app_actions_file = f"/tmp/timeline_analysis/{submission_id}/{assignment_id}_{user_id}_app_actions.json"
     
     app_actions_timeline = []
     previous_entry = None
@@ -287,12 +287,12 @@ Input:
 
 async def main(submission_id, assignment_id, user_id):
     # Configuration
-    file_path = f"analysis/{submission_id}.json"
+    file_path = f"/tmp/analysis/{submission_id}.json"
     base_name = f"{submission_id}.json"
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
     # Create a new folder for the `submission_id`
-    submission_folder = f"timeline_analysis/{submission_id}"
+    submission_folder = f"/tmp/timeline_analysis/{submission_id}"
     os.makedirs(submission_folder, exist_ok=True)  # Create folder if it doesn't already exist
     print(f"Folder created: {submission_folder}")
 
@@ -319,21 +319,21 @@ async def main(submission_id, assignment_id, user_id):
         merged_prompts = await merge_prompts_with_gpt4(prompts_data, OPENAI_API_KEY)
         
         # Save merged prompts
-        merged_file = f"timeline_analysis/{submission_id}/{assignment_id}_{user_id}_ai_prompt.json"
+        merged_file = f"/tmp/timeline_analysis/{submission_id}/{assignment_id}_{user_id}_ai_prompt.json"
         with open(merged_file, 'w') as f:
             json.dump(merged_prompts, f, indent=2)
         
         print(f"Merged prompts saved to {merged_file}")
 
         # Read and analyze app actions with GPT-o1
-        app_actions_file = f"timeline_analysis/{submission_id}/{assignment_id}_{user_id}_app_actions.json"
+        app_actions_file = f"/tmp/timeline_analysis/{submission_id}/{assignment_id}_{user_id}_app_actions.json"
         with open(app_actions_file, 'r') as f:
             app_actions_data = json.load(f)
             
         analyzed_actions = await analyze_app_actions_with_o1(app_actions_data, OPENAI_API_KEY)
         
         # Save analyzed app actions
-        analyzed_file = f"timeline_analysis/{submission_id}/{assignment_id}_{user_id}_timeline_summary.json"
+        analyzed_file = f"/tmp/timeline_analysis/{submission_id}/{assignment_id}_{user_id}_timeline_summary.json"
         with open(analyzed_file, 'w') as f:
             json.dump(analyzed_actions, f, indent=2)
             
