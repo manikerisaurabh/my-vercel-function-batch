@@ -7,7 +7,6 @@ import re
 import json
 import trio
 from datetime import datetime, timezone, timedelta
-from time import sleep
 from typing import List, Dict
 from openai import AsyncOpenAI
 from helper.timeline_analysis import main as timeline_analysis_main
@@ -232,7 +231,6 @@ async def main(submission_id, assignment_id, user_id):
     if not submission_id:
         raise ValueError("submission_id is required but not provided.")
 
-    
     # Configuration
     ASSIGNMENT_ID=submission_id
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # Replace with your actual API key
@@ -248,6 +246,7 @@ async def main(submission_id, assignment_id, user_id):
     print(f"submission_id: {submission_id}")
     print(f"SCREENSHOTS_FOLDER: {SCREENSHOTS_FOLDER}")
     print(f"BUCKET_NAME: {BUCKET_NAME}")
+
     # Download images from S3 before starting analysis
     download_images_from_s3(BUCKET_NAME, SCREENSHOTS_FOLDER, PREFIX)
 
