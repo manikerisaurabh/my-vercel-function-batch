@@ -293,53 +293,59 @@ async def main(submission_id, assignment_id, user_id):
 
     # Create a new folder for the `submission_id`
     submission_folder = f"/tmp/timeline_analysis/{submission_id}"
-    os.makedirs(submission_folder, exist_ok=True)  # Create folder if it doesn't already exist
-    print(f"Folder created: {submission_folder}")
+    os.makedirs(submission_folder, exist_ok=True)
 
+    # Analyze the timeline file
     try:
-        # Analyze timeline
-        result = analyze_timeline_file(file_path)
+        analysis_output = analyze_timeline_file(file_path)
+    except Exception as e:
+        print(f"Error analyzing timeline file: {str(e)}")
+        return
+
+    # Save processed outputs
+    save_prompts_timeline(file_path, analysis_output)
+    save_activity_durations(file_path, analysis_output, assignment_id, user_id, submission_id)
+    save_raw_prompts(file_path, analysis_output, assignment_id, user_id, submission_id)
+    save_app_actions(file_path, analysis_output, assignment_id, user_id, submission_id)
+
+    # Merge prompts using GPT-4 API
+    try:
+        prompts_file_path = f"{submission_folder}/{assignment_id}_{user_id}_raw_prompts.json"
+        with open(prompts_file_path, "r") as f:
+            raw_prompts_data = json.load(f)
         
-        # Save activity durations
-        save_activity_durations(base_name, result, assignment_id, user_id, submission_id)
-        
-        # Save raw prompts timeline
-        save_raw_prompts(base_name, result, assignment_id, user_id, submission_id)
-        
-        # Save app actions timeline
-        save_app_actions(file_path, result, assignment_id, user_id, submission_id)
-        
-        # Save prompts timeline
-        prompts_data = {
-            "prompts_timeline": result["prompts_timeline"],
-            "metadata": result["metadata"]
-        }
-        
-        # Merge prompts using GPT-4o
-        merged_prompts = await merge_prompts_with_gpt4(prompts_data, OPENAI_API_KEY)
+        merged_prompts = await merge_prompts_with_gpt4(raw_prompts_data, OPENAI_API_KEY)
         
         # Save merged prompts
-        merged_file = f"/tmp/timeline_analysis/{submission_id}/{assignment_id}_{user_id}_ai_prompt.json"
-        with open(merged_file, 'w') as f:
+        merged_prompts_file = f"{submission_folder}/{assignment_id}_{user_id}_merged_prompts.json"
+        with open(merged_prompts_file, "w") as f:
             json.dump(merged_prompts, f, indent=2)
-        
-        print(f"Merged prompts saved to {merged_file}")
-
-        # Read and analyze app actions with GPT-o1
-        app_actions_file = f"/tmp/timeline_analysis/{submission_id}/{assignment_id}_{user_id}_app_actions.json"
-        with open(app_actions_file, 'r') as f:
-            app_actions_data = json.load(f)
-            
-        analyzed_actions = await analyze_app_actions_with_o1(app_actions_data, OPENAI_API_KEY)
-        
-        # Save analyzed app actions
-        analyzed_file = f"/tmp/timeline_analysis/{submission_id}/{assignment_id}_{user_id}_timeline_summary.json"
-        with open(analyzed_file, 'w') as f:
-            json.dump(analyzed_actions, f, indent=2)
-            
-        print(f"Analyzed app actions saved to {analyzed_file}")
-        await upload_to_S3_main(submission_id)
+        print(f"Merged prompts saved to {merged_prompts_file}")
     except Exception as e:
-        print(f"Error: An unexpected error occurred - {str(e)}")
+        print(f"Error merging prompts: {str(e)}")
 
+    # Analyze app actions timeline using GPT
+    try:
+        app_actions_file_path = f"{submission_folder}/{assignment_id}_{user_id}_app_actions.json"
+        with open(app_actions_file_path, "r") as f:
+            app_actions_data = json.load(f)
+
+        analyzed_app_actions = await analyze_app_actions_with_o1(app_actions_data, OPENAI_API_KEY)
+
+        # Save analyzed app actions
+        analyzed_app_actions_file = f"{submission_folder}/{assignment_id}_{user_id}_analyzed_app_actions.json"
+        with open(analyzed_app_actions_file, "w") as f:
+            json.dump(analyzed_app_actions, f, indent=2)
+        print(f"Analyzed app actions saved to {analyzed_app_actions_file}")
+    except Exception as e:
+        print(f"Error analyzing app actions: {str(e)}")
+
+    # Upload all results to S3
+    try:
+        upload_to_S3_main(submission_folder)
+        print(f"All results uploaded to S3 from {submission_folder}")
+    except Exception as e:
+        print(f"Error uploading results to S3: {str(e)}")
+
+    print("Processing completed successfully.")
 
