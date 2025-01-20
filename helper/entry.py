@@ -222,9 +222,7 @@ async def main(submission_id, assignment_id, user_id):
     if not submission_id:
         raise ValueError("submission_id is required but not provided.")
 
-    print(f"submission_id: {submission_id}")
-    print(f"SCREENSHOTS_FOLDER: {SCREENSHOTS_FOLDER}")
-    print(f"BUCKET_NAME: {BUCKET_NAME}")
+    
     # Configuration
     ASSIGNMENT_ID=submission_id
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # Replace with your actual API key
@@ -236,7 +234,9 @@ async def main(submission_id, assignment_id, user_id):
 
     os.makedirs(SCREENSHOTS_FOLDER, exist_ok=True)  # Creates /tmp/screenshots/example_assignment if it doesn't exist
     os.makedirs(os.path.dirname(RESULTS_FILE), exist_ok=True)  # Creates /tmp/analysis if it doesn't exist
-    
+    print(f"submission_id: {submission_id}")
+    print(f"SCREENSHOTS_FOLDER: {SCREENSHOTS_FOLDER}")
+    print(f"BUCKET_NAME: {BUCKET_NAME}")
     # Download images from S3 before starting analysis
     BUCKET_NAME = os.getenv("S3_BUCKET_NAME")  # Replace with your S3 bucket name
     download_images_from_s3(BUCKET_NAME, SCREENSHOTS_FOLDER, PREFIX)
