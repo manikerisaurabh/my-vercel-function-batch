@@ -85,76 +85,63 @@ def extract_time_from_filename(filename: str) -> str:
     return None
 
 
-async def analyze_single_image(
-        client: AsyncOpenAI,
-        image_path: str,
-        image_file: str,
-        semaphore: trio.Semaphore,
-        delay=0,
-) -> Dict:
-    """Analyze a single image using OpenAI API with rate limiting"""
-    sleep(delay)
-    async with semaphore:  # Control concurrent requests
-        try:
-            time_from_start = extract_and_convert_to_local(image_file, 5, 30)
-            base64_image = encode_image(image_path)
+async def analyze_screenshots(
+    folder_path: str, 
+    api_key: str, 
+    results_file: str, 
+    image_range: List[int] = None,
+    max_concurrent: int = 3
+):
+    """
+    Analyze screenshots concurrently using OpenAI's Vision API
 
-            response = await client.chat.completions.create(
-                model="gpt-4o",
-                response_format={"type": "json_object"},
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "text",
-                                "text": """Create an array of json object
+    Args:
+        folder_path (str): Path to the folder containing screenshots
+        api_key (str): OpenAI API key
+        results_file (str): Path to save the results JSON file
+        image_range (List[int]): Range of images to process [start, end]
+        max_concurrent (int): Maximum number of concurrent API calls
+    """
+    # Initialize OpenAI client
+    client = AsyncOpenAI(api_key=api_key)
 
-activity: <First, only look at the active window or active tab i.e. where the user's cursor or keyboard typing is active. which one of the following best describes the work user is doing on the active window. Pick any one of the following "Coding", "AI Copilot in IDE" (double check user must be in a code editor (native application), and not on any website that looks like code editor), "Reading Documentation" (must be an official documentation, make a guess based on url if url or page header looks like one for an official documentation), "Reading Web articles/documents" (for articles, blogs, PDFs or report on other webpages), "Reading Stackoverflow", "Watching video tutorial", "Interacting with AI Chatbot" (Select this if user is on an AI website like chatgpt, bolt.new, lovable.dev, claude, gemini, perplexity), "Testing" (select if user is running their code in command line or opening a website created by them for example on localhost, mstunnels, ngrok), "Creating Document" (word, excel, powerpoint), "Reading code in GitHub", "Google Search", "Other". You can pick only one category from double quotes, and do not make a category of your own.>
-open_windows: [
-{
-app: <Find out which app or web app the user is using>,
-action: <What is the user doing on  this app, answer based on what you see the contents of the app, include as many details as you can in 1 line>,
-prompt: <copy paste what user is asking the AI/Search engine to do. Only populate this field if you can see what the user has typed into a text box (and its not a textbox hint like "How can bolt help you today?" or "Edit code (Ctrl+I), @ to mention"). You should be 100% confident that for AI copilots in code editors,  Whatever you are copy pasting here must have been typed into a text box by a human (You know if it was written by human if it starts with small characters, improper grammar or punctuation use).>,
-},
-{...},
-{...}
-]
+    # Get all jpg files from the folder
+    images = [f for f in os.listdir(folder_path) if f.endswith('.jpg')]
+    images.sort()
 
-If the user has multiple windows open with split screen, you can return one object for each window you see. If there's one primary window and others are in background you can skip returning details about the windows in background. Only return multiple when user is using split screen. Ignore the user webcam image overlays if any present."""
-                            },
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/jpeg;base64,{base64_image}",
-                                    "detail": "high",
-                                }
-                            }
-                        ]
-                    }
-                ],
-                max_tokens=1000,
-                temperature=0
+    # Create semaphore for rate limiting
+    semaphore = trio.Semaphore(max_concurrent)
+
+    results = []
+    start_time = time.time()
+    print(f"Starting analysis of {len(images)} screenshots...")
+
+    # Use trio.Nursery for concurrency
+    async with trio.open_nursery() as nursery:
+        for num, image_file in enumerate(images):
+            if image_range and (num < image_range[0] or num > image_range[1]): 
+                continue
+            image_path = os.path.join(folder_path, image_file)
+            nursery.start_soon(
+                analyze_and_collect, client, image_path, image_file, semaphore, results
             )
 
-            analysis = response.choices[0].message.content
-            print(time_from_start, analysis)
+    # Sort results by timestamp
+    timeline = sorted(results, key=lambda x: x['time_from_start'] if x['time_from_start'] else '')
 
-            return {
-                "time_from_start": time_from_start,
-                "analysis": analysis,
-            }
+    # Save results
+    with open(results_file, 'w') as f:
+        json.dump({
+            "timeline": timeline,
+            "total_screenshots": len(images),
+            "processing_time": f"{time.time() - start_time:.2f} seconds",
+            "last_updated": datetime.now().isoformat()
+        }, f, indent=4)
 
-            
+    print(f"\nAnalysis complete in {time.time() - start_time:.2f} seconds")
+    print(f"Results saved to {results_file}")
 
-        except Exception as e:
-            print(f"Error processing {image_file}: {str(e)}")
-            return {
-                "time_from_start": time_from_start,
-                "filename": image_file,
-                "error": str(e),
-                "processed_at": datetime.now().isoformat()
-            }
+    return timeline
 
 
 async def analyze_screenshots(
