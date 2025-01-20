@@ -231,6 +231,7 @@ async def main(submission_id, assignment_id, user_id):
     IMAGE_RANGE = [0, 2200]  # Specify which images to process (adjust as needed)
     MAX_CONCURRENT_REQUESTS = 60  # Adjust based on your API limits
     PREFIX=f"screenshots/{ASSIGNMENT_ID}"
+    BUCKET_NAME = os.getenv("BUCKET_NAME")  # Replace with your S3 bucket name
 
     os.makedirs(SCREENSHOTS_FOLDER, exist_ok=True)  # Creates /tmp/screenshots/example_assignment if it doesn't exist
     os.makedirs(os.path.dirname(RESULTS_FILE), exist_ok=True)  # Creates /tmp/analysis if it doesn't exist
@@ -238,7 +239,6 @@ async def main(submission_id, assignment_id, user_id):
     print(f"SCREENSHOTS_FOLDER: {SCREENSHOTS_FOLDER}")
     print(f"BUCKET_NAME: {BUCKET_NAME}")
     # Download images from S3 before starting analysis
-    BUCKET_NAME = os.getenv("BUCKET_NAME")  # Replace with your S3 bucket name
     download_images_from_s3(BUCKET_NAME, SCREENSHOTS_FOLDER, PREFIX)
 
     # Run analysis after downloading images
