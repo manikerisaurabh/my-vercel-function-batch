@@ -19,7 +19,7 @@ s3 = boto3.client(
 
 def upload_files_to_s3(submission_id):
 
-    BUCKET_NAME = "authcast-assignments"
+    BUCKET_NAME = os.getenv("BUCKET_NAME") or "authcast-assignments"
     FOLDER_NAME = "analysis"
     LOCAL_FOLDER = f"/tmp/timeline_analysis/{submission_id}"
     try:
