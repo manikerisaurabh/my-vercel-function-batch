@@ -8,7 +8,7 @@ from botocore.exceptions import NoCredentialsError, ClientError
 AWS_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_REGION = os.getenv("AWS_REGION")
-BUCKET_NAME = os.getenv("S3_BUCKET_NAME") | "authcast-assignments"  # Correct bucket name
+BUCKET_NAME = os.getenv("BUCKET_NAME") or "authcast-assignments"
 
 # Initialize S3 client with credentials
 s3 = boto3.client(
