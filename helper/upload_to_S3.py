@@ -8,7 +8,6 @@ from botocore.exceptions import NoCredentialsError, ClientError
 AWS_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_REGION = os.getenv("AWS_REGION")
-BUCKET_NAME = os.getenv("BUCKET_NAME") or "authcast-assignments"
 
 # Initialize S3 client with credentials
 s3 = boto3.client(
@@ -20,6 +19,7 @@ s3 = boto3.client(
 
 def upload_files_to_s3(submission_id):
 
+    BUCKET_NAME = os.getenv("BUCKET_NAME") or "authcast-assignments"
     FOLDER_NAME = "analysis"
     LOCAL_FOLDER = f"/tmp/timeline_analysis/{submission_id}"
     try:
