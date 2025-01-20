@@ -270,4 +270,6 @@ async def main(submission_id, assignment_id, user_id):
         print(f"Error during timeline analysis: {e}")
 
 if __name__ == "__main__":
-    trio.run(main)
+    # This ensures your `main()` function is run within an event loop
+    asyncio.run(main(submission_id, assignment_id, user_id))
+
