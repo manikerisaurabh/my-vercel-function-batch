@@ -80,5 +80,5 @@ def delete_local_json_files(submission_id):
         except Exception as e:
             print(f"Failed to delete {file_to_delete}: {e}")
 
-async def main(submission_id): 
+def main(submission_id): 
     upload_files_to_s3(submission_id)
