@@ -216,7 +216,17 @@ async def analyze_screenshots(
 
     return timeline
 
-
+async def analyze_and_collect(client, image_path, image_file, semaphore, results):
+    try:
+        result = await analyze_single_image(client, image_path, image_file, semaphore)
+        results.append(result)
+    except Exception as e:
+        print(f"Error analyzing {image_file}: {e}")
+        results.append({
+            "filename": image_file,
+            "error": str(e),
+            "processed_at": datetime.now().isoformat()
+        })
 # Main entry point of the script
 async def main(submission_id, assignment_id, user_id):
     if not submission_id:
@@ -242,14 +252,22 @@ async def main(submission_id, assignment_id, user_id):
     download_images_from_s3(BUCKET_NAME, SCREENSHOTS_FOLDER, PREFIX)
 
     # Run analysis after downloading images
-    timeline = await analyze_screenshots(
-        SCREENSHOTS_FOLDER,
-        OPENAI_API_KEY,
-        RESULTS_FILE,
-        IMAGE_RANGE,
-        MAX_CONCURRENT_REQUESTS
-    )   
-    await timeline_analysis_main(submission_id, assignment_id, user_id)
+    try:
+        timeline = await analyze_screenshots(
+            SCREENSHOTS_FOLDER,
+            OPENAI_API_KEY,
+            RESULTS_FILE,
+            IMAGE_RANGE,
+            MAX_CONCURRENT_REQUESTS
+        )
+    except Exception as e:
+        print(f"Error analyzing screenshots: {e}")
+        timeline = []  # In case of failure, ensure you still return an empty timeline
+
+    try:
+        await timeline_analysis_main(submission_id, assignment_id, user_id)
+    except Exception as e:
+        print(f"Error during timeline analysis: {e}")
 
 if __name__ == "__main__":
     trio.run(main)
