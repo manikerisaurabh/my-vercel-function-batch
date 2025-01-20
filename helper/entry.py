@@ -42,32 +42,33 @@ def extract_and_convert_to_local(filename, offset_hours, offset_minutes):
 def download_images_from_s3(bucket_name: str, folder_path: str, prefix: str, s3_client=None):
     """
     Downloads images from a specific folder in an S3 bucket to the specified local folder.
-    
-    Args:
-        bucket_name (str): S3 bucket name
-        folder_path (str): Local folder to save images
-        s3_client: boto3 S3 client (can be passed as an argument or default to a new client)
     """
     if s3_client is None:
         s3_client = boto3.client('s3')  # Initialize the S3 client
     
-    # List objects in the S3 bucket with a prefix matching the folder path
-    response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
+    print(f"Fetching images from bucket: {bucket_name}, prefix: {prefix}")
     
-    if 'Contents' not in response:
-        print("Looking for images in folder:", os.path.abspath(folder_path))
+    try:
+        response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
+    except Exception as e:
+        print(f"Error listing objects: {e}")
         return
-    
-    os.makedirs(folder_path, exist_ok=True)  # Ensure the folder exists
+
+    if 'Contents' not in response:
+        print(f"No files found with prefix {prefix} in bucket {bucket_name}")
+        return
+
+    os.makedirs(folder_path, exist_ok=True)
 
     for item in response['Contents']:
-        # Check if the object is an image and if its key starts with the specified folder path
         file_key = item['Key']
-        if file_key.endswith('.jpg') and file_key.startswith(folder_path):  # Only download jpg images
+        if file_key.endswith('.jpg') and file_key.startswith(prefix):
             file_name = os.path.join(folder_path, os.path.basename(file_key))
-            s3_client.download_file(bucket_name, file_key, file_name)
-            print(f"Downloaded {file_name}")
-
+            try:
+                s3_client.download_file(bucket_name, file_key, file_name)
+                print(f"Downloaded: {file_name}")
+            except Exception as e:
+                print(f"Error downloading {file_key}: {e}")
 
 def encode_image(image_path: str) -> str:
     """Convert image to base64 string"""
