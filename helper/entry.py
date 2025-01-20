@@ -220,7 +220,7 @@ async def analyze_screenshots(
 # Main entry point of the script
 async def main(submission_id, assignment_id, user_id):
     if not submission_id:
-    raise ValueError("submission_id is required but not provided.")
+        raise ValueError("submission_id is required but not provided.")
 
     print(f"submission_id: {submission_id}")
     print(f"SCREENSHOTS_FOLDER: {SCREENSHOTS_FOLDER}")
