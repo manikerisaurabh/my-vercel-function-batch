@@ -104,6 +104,7 @@ async def delete_local_json_files(submission_id):
 
 # Main entry point to start the process
 async def main(submission_id):
+    print(f"submissioin id in main of upload_to_S3 {submission_id}")
     await upload_files_to_s3(submission_id)
 
 # To run the main function with a specific submission_id
