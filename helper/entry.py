@@ -99,7 +99,9 @@ async def analyze_single_image(
     async with semaphore:  # Control concurrent requests
         try:
             time_from_start = extract_and_convert_to_local(image_file, 5, 30)
+            print("1")
             base64_image = encode_image(image_path)
+            print("2")
 
             response = await client.chat.completions.create(
                 model="gpt-4o",
@@ -138,9 +140,11 @@ If the user has multiple windows open with split screen, you can return one obje
                 max_tokens=1000,
                 temperature=0
             )
-
+            print("3")
             analysis = response.choices[0].message.content
+            print("4")
             print(time_from_start, analysis)
+            print("5")
 
             return {
                 "time_from_start": time_from_start,
@@ -231,17 +235,17 @@ async def analyze_screenshots(
 
     return timeline
 
-async def analyze_and_collect(client, image_path, image_file, semaphore, results):
-    try:
-        result = await analyze_single_image(client, image_path, image_file, semaphore)
-        results.append(result)
-    except Exception as e:
-        print(f"Error analyzing {image_file}: {e}")
-        results.append({
-            "filename": image_file,
-            "error": str(e),
-            "processed_at": datetime.now().isoformat()
-        })
+# async def analyze_and_collect(client, image_path, image_file, semaphore, results):
+#     try:
+#         result = await analyze_single_image(client, image_path, image_file, semaphore)
+#         results.append(result)
+#     except Exception as e:
+#         print(f"Error analyzing {image_file}: {e}")
+#         results.append({
+#             "filename": image_file,
+#             "error": str(e),
+#             "processed_at": datetime.now().isoformat()
+#         })
 # Main entry point of the script
 async def main(submission_id, assignment_id, user_id):
     if not submission_id:
