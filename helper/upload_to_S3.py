@@ -16,7 +16,9 @@ FOLDER_NAME = "analysis"
 
 async def upload_file_to_s3(s3_client, local_file_path, s3_key):
     try:
+        # Open file asynchronously
         async with aiofiles.open(local_file_path, 'rb') as file:
+            # Use the await syntax correctly to upload the file to S3
             await s3_client.put_object(Bucket=BUCKET_NAME, Key=s3_key, Body=file)
             print(f"Uploaded: {local_file_path} -> s3://{BUCKET_NAME}/{s3_key}")
     except ClientError as e:
@@ -30,7 +32,7 @@ async def upload_files_to_s3(submission_id):
     print(f"Local folder: {LOCAL_FOLDER}")
 
     try:
-        # Use aioboto3 for async S3 client with Session().client()
+        # Use aioboto3 to asynchronously create an S3 client
         async with aioboto3.Session().client(
             's3',
             aws_access_key_id=AWS_ACCESS_KEY,
@@ -101,7 +103,4 @@ async def delete_local_json_files(submission_id):
 async def main(submission_id):
     await upload_files_to_s3(submission_id)
 
-# To run the main function with a specific submission_id
-if __name__ == "__main__":
-    submission_id = "your_submission_id_here"  # Replace with actual submission ID
-    asyncio.run(main(submission_id))
+
