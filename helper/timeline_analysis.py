@@ -5,7 +5,7 @@ import asyncio
 from openai import AsyncOpenAI
 
 
-from helper.upload_to_S3 import main as upload_to_S3_main  # Import the function from upload.py
+from helper.upload_to_S3 import main as await   # Import the function from upload.py
 
 
 def clean_json_string(json_str):
@@ -342,7 +342,7 @@ async def main(submission_id, assignment_id, user_id):
 
     # Upload all results to S3
     try:
-        upload_to_S3_main(submission_folder)
+        await upload_to_S3_main(submission_folder)
         print(f"All results uploaded to S3 from {submission_folder}")
     except Exception as e:
         print(f"Error uploading results to S3: {str(e)}")

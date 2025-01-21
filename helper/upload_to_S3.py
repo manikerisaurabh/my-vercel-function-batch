@@ -1,84 +1,107 @@
 import os
-import boto3
 import shutil
+import aiofiles
+import asyncio
+import aioboto3
 from botocore.exceptions import NoCredentialsError, ClientError
-
 
 # AWS S3 Configuration
 AWS_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_REGION = os.getenv("AWS_REGION")
 
-# Initialize S3 client with credentials
-s3 = boto3.client(
-    's3',
-    aws_access_key_id=AWS_ACCESS_KEY,
-    aws_secret_access_key=AWS_SECRET_KEY,
-    region_name=AWS_REGION
-)
+# Bucket name and folder configuration
+BUCKET_NAME = os.getenv("BUCKET_NAME") or "authcast-assignments"
+FOLDER_NAME = "analysis"
 
-def upload_files_to_s3(submission_id):
-
-    BUCKET_NAME = os.getenv("BUCKET_NAME") or "authcast-assignments"
-    FOLDER_NAME = "analysis"
-    LOCAL_FOLDER = f"/tmp/timeline_analysis/{submission_id}"
+async def upload_file_to_s3(s3_client, local_file_path, s3_key):
     try:
-        # Iterate through all files in the specified local folder
-        for root, dirs, files in os.walk(LOCAL_FOLDER):
-            for file in files:
-                if file.endswith(".json"):
-                    local_file_path = os.path.join(root, file)
-                    s3_key = f"{FOLDER_NAME}/{file}"
+        async with aiofiles.open(local_file_path, 'rb') as file:
+            await s3_client.put_object(Bucket=BUCKET_NAME, Key=s3_key, Body=file)
+            print(f"Uploaded: {local_file_path} -> s3://{BUCKET_NAME}/{s3_key}")
+    except ClientError as e:
+        print(f"Failed to upload {local_file_path} to s3://{BUCKET_NAME}/{s3_key}: {e}")
+    except Exception as e:
+        print(f"An error occurred during upload of {local_file_path}: {e}")
 
-                    try:
-                        # Upload the file to S3
-                        s3.upload_file(local_file_path, BUCKET_NAME, s3_key)
-                        print(f"Uploaded: {local_file_path} -> s3://{BUCKET_NAME}/{s3_key}")
-                    except ClientError as e:
-                        print(f"Failed to upload {local_file_path} to s3://{BUCKET_NAME}/{s3_key}: {e}")
+async def upload_files_to_s3(submission_id):
+    LOCAL_FOLDER = f"/tmp/timeline_analysis/{submission_id}"
+    print(f"Submission ID: {submission_id}")
+    print(f"Local folder: {LOCAL_FOLDER}")
+
+    try:
+        # Use aioboto3 for async S3 client
+        async with aioboto3.client(
+            's3',
+            aws_access_key_id=AWS_ACCESS_KEY,
+            aws_secret_access_key=AWS_SECRET_KEY,
+            region_name=AWS_REGION
+        ) as s3_client:
+            tasks = []
+            
+            # Iterate through all files in the local folder
+            for root, dirs, files in os.walk(LOCAL_FOLDER):
+                for file in files:
+                    if file.endswith(".json"):
+                        local_file_path = os.path.join(root, file)
+                        s3_key = f"{FOLDER_NAME}/{file}"
+                        # Schedule the upload task
+                        tasks.append(upload_file_to_s3(s3_client, local_file_path, s3_key))
+
+            # Execute all tasks asynchronously
+            if tasks:
+                await asyncio.gather(*tasks)
 
         # After uploading all files, delete local JSON files
-        delete_local_json_files(submission_id)
+        await delete_local_json_files(submission_id)
 
     except NoCredentialsError:
         print("AWS credentials not found. Please configure them correctly.")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"An error occurred during S3 upload: {e}")
 
-def delete_local_json_files(submission_id):
-    # Paths of the directories and file to delete
+async def delete_local_json_files(submission_id):
     dirs_to_delete = [
         f"/tmp/screenshots/{submission_id}",
-        f"/tp/timeline_analysis/{submission_id}",
+        f"/tmp/timeline_analysis/{submission_id}",
     ]
     file_to_delete = f"/tmp/analysis/{submission_id}.json"
 
-    # Delete JSON files in the directories
-    for dir_path in dirs_to_delete:
-        if os.path.exists(dir_path):
-            for root, dirs, files in os.walk(dir_path):
-                for file in files:
-                    if file.endswith(".json"):
-                        file_path = os.path.join(root, file)
-                        try:
-                            os.remove(file_path)
-                            print(f"Deleted: {file_path}")
-                        except Exception as e:
-                            print(f"Failed to delete {file_path}: {e}")
-            # Remove the directory itself if it's empty
-            try:
-                shutil.rmtree(dir_path)
-                print(f"Removed directory: {dir_path}")
-            except Exception as e:
-                print(f"Failed to remove directory {dir_path}: {e}")
+    try:
+        # Delete files in directories
+        for dir_path in dirs_to_delete:
+            if os.path.exists(dir_path):
+                for root, dirs, files in os.walk(dir_path):
+                    for file in files:
+                        if file.endswith(".json"):
+                            file_path = os.path.join(root, file)
+                            try:
+                                os.remove(file_path)
+                                print(f"Deleted: {file_path}")
+                            except Exception as e:
+                                print(f"Failed to delete {file_path}: {e}")
+                # Remove the directory if empty
+                try:
+                    shutil.rmtree(dir_path)
+                    print(f"Removed directory: {dir_path}")
+                except Exception as e:
+                    print(f"Failed to remove directory {dir_path}: {e}")
 
-    # Delete the single JSON file
-    if os.path.exists(file_to_delete):
-        try:
+        # Delete the single JSON file
+        if os.path.exists(file_to_delete):
             os.remove(file_to_delete)
             print(f"Deleted: {file_to_delete}")
-        except Exception as e:
-            print(f"Failed to delete {file_to_delete}: {e}")
+        else:
+            print(f"File {file_to_delete} does not exist.")
 
-def main(submission_id): 
-    upload_files_to_s3(submission_id)
+    except Exception as e:
+        print(f"An error occurred during file deletion: {e}")
+
+# Main entry point to start the process
+async def main(submission_id):
+    await upload_files_to_s3(submission_id)
+
+# To run the main function with a specific submission_id
+if __name__ == "__main__":
+    submission_id = "your_submission_id_here"  # Replace with actual submission ID
+    asyncio.run(main(submission_id))
