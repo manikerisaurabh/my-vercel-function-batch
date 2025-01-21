@@ -342,7 +342,7 @@ async def main(submission_id, assignment_id, user_id):
 
     # Upload all results to S3
     try:
-        await upload_to_S3_main(submission_folder)
+        await upload_to_S3_main(submission_id)
         print(f"All results uploaded to S3 from {submission_folder}")
     except Exception as e:
         print(f"Error uploading results to S3: {str(e)}")
