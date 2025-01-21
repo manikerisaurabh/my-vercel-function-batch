@@ -5,7 +5,7 @@ import asyncio
 from openai import AsyncOpenAI
 
 
-from helper.upload_to_S3 import main as await   # Import the function from upload.py
+from helper.upload_to_S3 import main as upload_to_S3_main  # Import the function from upload.py
 
 
 def clean_json_string(json_str):
