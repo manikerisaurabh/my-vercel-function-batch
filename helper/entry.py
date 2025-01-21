@@ -7,7 +7,6 @@ import asyncio
 
 import re
 import json
-import trio
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict
 from openai import AsyncOpenAI
@@ -188,23 +187,12 @@ async def analyze_screenshots(
     # Get all jpg files from the folder
     images = [f for f in os.listdir(folder_path) if f.endswith('.jpg')]
     images.sort()
+    print(images)
 
     # Create semaphore for rate limiting
     semaphore = asyncio.Semaphore(max_concurrent)
 
-    # results = []
-    # start_time = time.time()
-    # print(f"Starting analysis of {len(images)} screenshots...")
-
-    # # Use trio.Nursery for concurrency
-    # async with trio.open_nursery() as nursery:
-    #     for num, image_file in enumerate(images):
-    #         if image_range and (num < image_range[0] or num > image_range[1]): 
-    #             continue
-    #         image_path = os.path.join(folder_path, image_file)
-    #         nursery.start_soon(
-    #             analyze_and_collect, client, image_path, image_file, semaphore, results
-    #         )
+  
 
     tasks = []
     for num, image_file in enumerate(images):
@@ -239,18 +227,7 @@ async def analyze_screenshots(
 
     return timeline
 
-# async def analyze_and_collect(client, image_path, image_file, semaphore, results):
-#     try:
-#         result = await analyze_single_image(client, image_path, image_file, semaphore)
-#         results.append(result)
-#     except Exception as e:
-#         print(f"Error analyzing {image_file}: {e}")
-#         results.append({
-#             "filename": image_file,
-#             "error": str(e),
-#             "processed_at": datetime.now().isoformat()
-#         })
-# Main entry point of the script
+
 async def main(submission_id, assignment_id, user_id):
     if not submission_id:
         raise ValueError("submission_id is required but not provided.")
