@@ -21,7 +21,7 @@ async def upload_file_to_s3(s3_client, local_file_path, s3_key):
         print(f"bucekt : {BUCKET_NAME}")
         print(f"folder : {FOLDER_NAME}")
         # Open file asynchronously using aiofiles
-        async with aiofiles.open(local_file_path, 'rb') as file:
+        with open(local_file_path, 'rb') as file:
             # Upload the file asynchronously
             print("saurabh xyz")
             print(f" S3 key : {s3_key}")
