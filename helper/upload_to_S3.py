@@ -14,11 +14,12 @@ AWS_REGION = os.getenv("AWS_REGION")
 BUCKET_NAME = os.getenv("BUCKET_NAME") or "authcast-assignments"
 FOLDER_NAME = "analysis"
 
+# Function to upload file to S3
 async def upload_file_to_s3(s3_client, local_file_path, s3_key):
     try:
-        # Open file asynchronously
+        # Open file asynchronously using aiofiles
         async with aiofiles.open(local_file_path, 'rb') as file:
-            # Use the await syntax correctly to upload the file to S3
+            # Upload the file asynchronously
             await s3_client.put_object(Bucket=BUCKET_NAME, Key=s3_key, Body=file)
             print(f"Uploaded: {local_file_path} -> s3://{BUCKET_NAME}/{s3_key}")
     except ClientError as e:
@@ -26,13 +27,14 @@ async def upload_file_to_s3(s3_client, local_file_path, s3_key):
     except Exception as e:
         print(f"An error occurred during upload of {local_file_path}: {e}")
 
+# Function to upload multiple files asynchronously
 async def upload_files_to_s3(submission_id):
     LOCAL_FOLDER = f"/tmp/timeline_analysis/{submission_id}"
     print(f"Submission ID: {submission_id}")
     print(f"Local folder: {LOCAL_FOLDER}")
 
     try:
-        # Use aioboto3 to asynchronously create an S3 client
+        # Create an S3 client asynchronously with aioboto3
         async with aioboto3.Session().client(
             's3',
             aws_access_key_id=AWS_ACCESS_KEY,
@@ -62,6 +64,7 @@ async def upload_files_to_s3(submission_id):
     except Exception as e:
         print(f"An error occurred during S3 upload: {e}")
 
+# Function to delete local JSON files after upload
 async def delete_local_json_files(submission_id):
     dirs_to_delete = [
         f"/tmp/screenshots/{submission_id}",
@@ -103,4 +106,4 @@ async def delete_local_json_files(submission_id):
 async def main(submission_id):
     await upload_files_to_s3(submission_id)
 
-
+# To run the main function with a specific submission_id
