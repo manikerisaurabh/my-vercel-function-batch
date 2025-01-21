@@ -199,8 +199,15 @@ async def analyze_screenshots(
         if image_range and (num < image_range[0] or num > image_range[1]): 
             continue
         image_path = os.path.join(folder_path, image_file)
-        task = await analyze_single_image(client, image_path, image_file, semaphore)
-        tasks.append(task)
+        # task = await analyze_single_image(client, image_path, image_file, semaphore)
+        # tasks.append(task)
+
+        tasks.append(
+            asyncio.create_task(
+                analyze_single_image(client, image_path, image_file, semaphore)
+            )
+        )
+
 
     # Process images concurrently
     start_time = time.time()
