@@ -39,9 +39,48 @@ def extract_and_convert_to_local(filename, offset_hours, offset_minutes):
 
 
 # AWS S3 Download Function
-def download_images_from_s3(bucket_name: str, folder_path: str, prefix: str, s3_client=None):
+# def download_images_from_s3(bucket_name: str, folder_path: str, prefix: str, s3_client=None):
+#     """
+#     Downloads images from a specific folder in an S3 bucket to the specified local folder.
+#     """
+#     if s3_client is None:
+#         s3_client = boto3.client('s3')  # Initialize the S3 client
+    
+#     print(f"Fetching images from bucket: {bucket_name}, prefix: {prefix}")
+    
+#     try:
+#         response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
+#     except Exception as e:
+#         print(f"Error listing objects: {e}")
+#         return
+
+#     if 'Contents' not in response:
+#         print(f"No files found with prefix {prefix} in bucket {bucket_name}")
+#         return
+
+#     os.makedirs(folder_path, exist_ok=True)
+
+#     for item in response['Contents']:
+#         file_key = item['Key']
+#         if file_key.endswith('.jpg') and file_key.startswith(prefix):
+#             file_name = os.path.join(folder_path, os.path.basename(file_key))
+#             try:
+#                 s3_client.download_file(bucket_name, file_key, file_name)
+#                 print(f"Downloaded: {file_name}")
+#             except Exception as e:
+#                 print(f"Error downloading {file_key}: {e}")
+
+def download_images_from_s3(bucket_name: str, folder_path: str, prefix: str, start_no: int, end_no: int, s3_client=None):
     """
-    Downloads images from a specific folder in an S3 bucket to the specified local folder.
+    Downloads a specific range of images from a folder in an S3 bucket to the specified local folder.
+    Downloads images based on a range defined by start_no and end_no (inclusive).
+
+    :param bucket_name: Name of the S3 bucket.
+    :param folder_path: Local folder where images will be downloaded.
+    :param prefix: Prefix in the S3 bucket to filter files.
+    :param start_no: The starting number (1-based index) of the range of images to download.
+    :param end_no: The ending number (1-based index) of the range of images to download.
+    :param s3_client: S3 client object (optional).
     """
     if s3_client is None:
         s3_client = boto3.client('s3')  # Initialize the S3 client
@@ -49,6 +88,7 @@ def download_images_from_s3(bucket_name: str, folder_path: str, prefix: str, s3_
     print(f"Fetching images from bucket: {bucket_name}, prefix: {prefix}")
     
     try:
+        # List objects in the bucket with the specified prefix
         response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
     except Exception as e:
         print(f"Error listing objects: {e}")
@@ -58,17 +98,26 @@ def download_images_from_s3(bucket_name: str, folder_path: str, prefix: str, s3_
         print(f"No files found with prefix {prefix} in bucket {bucket_name}")
         return
 
+    # Filter only .jpg files and sort by key
+    images = [item['Key'] for item in response['Contents'] if item['Key'].endswith('.jpg') and item['Key'].startswith(prefix)]
+    images.sort()  # Ensure the sequence is consistent with S3 order
+
+    # Select the range of images to download
+    selected_images = images[start_no - 1:end_no]  # 1-based index adjustment
+    if not selected_images:
+        print(f"No images found in the specified range ({start_no} to {end_no}).")
+        return
+
     os.makedirs(folder_path, exist_ok=True)
 
-    for item in response['Contents']:
-        file_key = item['Key']
-        if file_key.endswith('.jpg') and file_key.startswith(prefix):
-            file_name = os.path.join(folder_path, os.path.basename(file_key))
-            try:
-                s3_client.download_file(bucket_name, file_key, file_name)
-                print(f"Downloaded: {file_name}")
-            except Exception as e:
-                print(f"Error downloading {file_key}: {e}")
+    for file_key in selected_images:
+        file_name = os.path.join(folder_path, os.path.basename(file_key))
+        try:
+            s3_client.download_file(bucket_name, file_key, file_name)
+            print(f"Downloaded: {file_name}")
+        except Exception as e:
+            print(f"Error downloading {file_key}: {e}")
+
 
 def encode_image(image_path: str) -> str:
     """Convert image to base64 string"""
@@ -235,10 +284,18 @@ async def analyze_screenshots(
     return timeline
 
 
-async def main(submission_id, assignment_id, user_id):
+async def main(submission_id, assignment_id, user_id, start_no, end_no):
     if not submission_id:
         raise ValueError("submission_id is required but not provided.")
 
+    try:
+        start_no = int(start_no)
+        end_no = int(end_no)
+    except ValueError:
+        raise ValueError("start_no and end_no must be valid integers.")
+
+    print(f"This is start: {start_no}")
+    print(f"This is end: {end_no}")
     # Configuration
     ASSIGNMENT_ID=submission_id
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # Replace with your actual API key
@@ -256,7 +313,7 @@ async def main(submission_id, assignment_id, user_id):
     print(f"BUCKET_NAME: {BUCKET_NAME}")
 
     # Download images from S3 before starting analysis
-    download_images_from_s3(BUCKET_NAME, SCREENSHOTS_FOLDER, PREFIX)
+    download_images_from_s3(BUCKET_NAME, SCREENSHOTS_FOLDER, PREFIX, start_no, end_no)
 
 
     # Run analysis after downloading images
@@ -276,6 +333,7 @@ async def main(submission_id, assignment_id, user_id):
         await timeline_analysis_main(submission_id, assignment_id, user_id)
     except Exception as e:
         print(f"Error during timeline analysis: {e}")
+
 
 # if __name__ == "__main__":
 #     # This ensures your `main()` function is run within an event loop
