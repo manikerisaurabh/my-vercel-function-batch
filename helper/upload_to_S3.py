@@ -17,9 +17,13 @@ FOLDER_NAME = "analysis"
 # Function to upload file to S3
 async def upload_file_to_s3(s3_client, local_file_path, s3_key):
     try:
+        print(f"local file path : {local_file_path}")
+        print(f"bucekt : {BUCKET_NAME}")
+        print(f"folder : {FOLDER_NAME}")
         # Open file asynchronously using aiofiles
         async with aiofiles.open(local_file_path, 'rb') as file:
             # Upload the file asynchronously
+            print("a")
             await s3_client.put_object(Bucket=BUCKET_NAME, Key=s3_key, Body=file)
             print(f"Uploaded: {local_file_path} -> s3://{BUCKET_NAME}/{s3_key}")
     except ClientError as e:
