@@ -317,7 +317,7 @@ async def main(submission_id, assignment_id, user_id):
         merged_prompts = await merge_prompts_with_gpt4(raw_prompts_data, OPENAI_API_KEY)
         
         # Save merged prompts
-        merged_prompts_file = f"{submission_folder}/{assignment_id}_{user_id}_merged_prompts.json"
+        merged_prompts_file = f"{submission_folder}/{assignment_id}_{user_id}_ai_prompt.json"
         with open(merged_prompts_file, "w") as f:
             json.dump(merged_prompts, f, indent=2)
         print(f"Merged prompts saved to {merged_prompts_file}")
@@ -333,7 +333,7 @@ async def main(submission_id, assignment_id, user_id):
         analyzed_app_actions = await analyze_app_actions_with_o1(app_actions_data, OPENAI_API_KEY)
 
         # Save analyzed app actions
-        analyzed_app_actions_file = f"{submission_folder}/{assignment_id}_{user_id}_analyzed_app_actions.json"
+        analyzed_app_actions_file = f"{submission_folder}/{assignment_id}_{user_id}_timeline_summary.json"
         with open(analyzed_app_actions_file, "w") as f:
             json.dump(analyzed_app_actions, f, indent=2)
         print(f"Analyzed app actions saved to {analyzed_app_actions_file}")
