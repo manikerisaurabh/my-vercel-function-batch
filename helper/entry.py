@@ -95,14 +95,16 @@ async def analyze_single_image(
         delay=0,
 ) -> Dict:
     """Analyze a single image using OpenAI API with rate limiting"""
-    sleep(delay)
+    #sleep(delay)
+    await asyncio.sleep(delay)
+
     async with semaphore:  # Control concurrent requests
         try:
             time_from_start = extract_and_convert_to_local(image_file, 5, 30)
             print("1")
             base64_image = encode_image(image_path)
             print("2")
-
+            print(f"Analyzing image: {image_file} at {image_path}")
             response = await client.chat.completions.create(
                 model="gpt-4o",
                 response_format={"type": "json_object"},
@@ -216,7 +218,9 @@ async def analyze_screenshots(
     start_time = time.time()
     print(f"Starting analysis of {len(images)} screenshots...")
 
-    results = await asyncio.gather(*tasks)
+    #results = await asyncio.gather(*tasks)
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+
 
     # Sort results by timestamp
     timeline = sorted(results, key=lambda x: x['time_from_start'] if x['time_from_start'] else '')
@@ -289,7 +293,7 @@ async def main(submission_id, assignment_id, user_id):
     except Exception as e:
         print(f"Error during timeline analysis: {e}")
 
-if __name__ == "__main__":
-    # This ensures your `main()` function is run within an event loop
-    asyncio.run(main(submission_id, assignment_id, user_id))
+# if __name__ == "__main__":
+#     # This ensures your `main()` function is run within an event loop
+#     asyncio.run(main(submission_id, assignment_id, user_id))
 
