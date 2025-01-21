@@ -23,7 +23,7 @@ async def upload_file_to_s3(s3_client, local_file_path, s3_key):
         # Open file asynchronously using aiofiles
         async with aiofiles.open(local_file_path, 'rb') as file:
             # Upload the file asynchronously
-            print("a")
+            print("saurabh xyz")
             priny(f" S3 key : {s3_key}")
             priny(f" S3 bucket name : {BUCKET_NAME}")
             await s3_client.put_object(Bucket=BUCKET_NAME, Key=s3_key, Body=file)
