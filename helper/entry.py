@@ -266,6 +266,7 @@ async def main(submission_id, assignment_id, user_id):
     # Download images from S3 before starting analysis
     download_images_from_s3(BUCKET_NAME, SCREENSHOTS_FOLDER, PREFIX)
 
+
     # Run analysis after downloading images
     try:
         timeline = await analyze_screenshots(
