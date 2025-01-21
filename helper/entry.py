@@ -3,6 +3,7 @@ import time
 import base64
 import boto3
 from time import sleep
+import asyncio
 
 import re
 import json
@@ -90,7 +91,7 @@ async def analyze_single_image(
         client: AsyncOpenAI,
         image_path: str,
         image_file: str,
-        semaphore: trio.Semaphore,
+        semaphore: asyncio.Semaphore,
         delay=0,
 ) -> Dict:
     """Analyze a single image using OpenAI API with rate limiting"""
@@ -183,21 +184,35 @@ async def analyze_screenshots(
     images.sort()
 
     # Create semaphore for rate limiting
-    semaphore = trio.Semaphore(max_concurrent)
+    semaphore = asyncio.Semaphore(max_concurrent)
 
-    results = []
+    # results = []
+    # start_time = time.time()
+    # print(f"Starting analysis of {len(images)} screenshots...")
+
+    # # Use trio.Nursery for concurrency
+    # async with trio.open_nursery() as nursery:
+    #     for num, image_file in enumerate(images):
+    #         if image_range and (num < image_range[0] or num > image_range[1]): 
+    #             continue
+    #         image_path = os.path.join(folder_path, image_file)
+    #         nursery.start_soon(
+    #             analyze_and_collect, client, image_path, image_file, semaphore, results
+    #         )
+
+    tasks = []
+    for num, image_file in enumerate(images):
+        if image_range and (num < image_range[0] or num > image_range[1]): 
+            continue
+        image_path = os.path.join(folder_path, image_file)
+        task = analyze_single_image(client, image_path, image_file, semaphore)
+        tasks.append(task)
+
+    # Process images concurrently
     start_time = time.time()
     print(f"Starting analysis of {len(images)} screenshots...")
 
-    # Use trio.Nursery for concurrency
-    async with trio.open_nursery() as nursery:
-        for num, image_file in enumerate(images):
-            if image_range and (num < image_range[0] or num > image_range[1]): 
-                continue
-            image_path = os.path.join(folder_path, image_file)
-            nursery.start_soon(
-                analyze_and_collect, client, image_path, image_file, semaphore, results
-            )
+    results = await asyncio.gather(*tasks)
 
     # Sort results by timestamp
     timeline = sorted(results, key=lambda x: x['time_from_start'] if x['time_from_start'] else '')
