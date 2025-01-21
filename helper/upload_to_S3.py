@@ -25,13 +25,13 @@ async def upload_file_to_s3(s3_client, local_file_path, s3_key):
         print(f"An error occurred during upload of {local_file_path}: {e}")
 
 async def upload_files_to_s3(submission_id):
-    LOCAL_FOLDER = f"/tmp/timeline_analysis/{submission_id}"
+    LOCAL_FOLDER = f"tmp/timeline_analysis/{submission_id}"
     print(f"Submission ID: {submission_id}")
     print(f"Local folder: {LOCAL_FOLDER}")
 
     try:
-        # Use aioboto3 for async S3 client
-        async with aioboto3.client(
+        # Use aioboto3 for async S3 client with Session().client()
+        async with aioboto3.Session().client(
             's3',
             aws_access_key_id=AWS_ACCESS_KEY,
             aws_secret_access_key=AWS_SECRET_KEY,
