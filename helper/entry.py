@@ -340,7 +340,7 @@ async def main(submission_id, assignment_id, user_id, total_screenshots):
     # Download images from S3 before starting analysis
     #download_images_from_s3(BUCKET_NAME, SCREENSHOTS_FOLDER, PREFIX, start_no, end_no)
 
-    batch_size = 10
+    batch_size = 3
     for batch_start in range(1, total_screenshots, batch_size):
         batch_end = min(batch_start + batch_size, total_screenshots) - 1
         download_images_from_s3(BUCKET_NAME, SCREENSHOTS_FOLDER, PREFIX, batch_start, batch_end)
