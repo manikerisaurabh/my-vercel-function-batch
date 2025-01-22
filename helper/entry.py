@@ -4,7 +4,7 @@ import base64
 import boto3
 from time import sleep
 import asyncio
-
+import shutil
 import re
 import json
 from datetime import datetime, timezone, timedelta
@@ -341,7 +341,7 @@ async def main(submission_id, assignment_id, user_id, total_screenshots):
     #download_images_from_s3(BUCKET_NAME, SCREENSHOTS_FOLDER, PREFIX, start_no, end_no)
 
     batch_size = 10
-    for batch_start in range(0, total_screenshots, batch_size):
+    for batch_start in range(1, total_screenshots, batch_size):
         batch_end = min(batch_start + batch_size, total_screenshots) - 1
         download_images_from_s3(BUCKET_NAME, SCREENSHOTS_FOLDER, PREFIX, batch_start, batch_end)
         try:
