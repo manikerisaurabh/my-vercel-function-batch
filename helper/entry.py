@@ -299,7 +299,7 @@ async def analyze_screenshots(
         existing_data = [] 
     
     existing_data.append(new_data)
-
+    print(f"this is existing data: {existing_data}")
     with open(results_file, 'w') as f:
         json.dump(existing_data, f, indent=4)
 
