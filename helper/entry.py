@@ -12,6 +12,15 @@ from typing import List, Dict
 from openai import AsyncOpenAI
 from helper.timeline_analysis import main as timeline_analysis_main
 
+def delete_folder(folder_path):
+    if os.path.exists(folder_path):
+        try:
+            shutil.rmtree(folder_path)  # Deletes the folder and all its contents
+            print(f"Successfully deleted folder: {folder_path}")
+        except Exception as e:
+            print(f"Error deleting folder {folder_path}: {e}")
+    else:
+        print(f"Folder does not exist: {folder_path}")
 
 def extract_and_convert_to_local(filename, offset_hours, offset_minutes):
     # Define the regex pattern to match the date, time, and milliseconds
@@ -269,33 +278,48 @@ async def analyze_screenshots(
     # Sort results by timestamp
     timeline = sorted(results, key=lambda x: x['time_from_start'] if x['time_from_start'] else '')
 
+    new_data = {
+        "timeline": timeline,
+        "total_screenshots": len(images),
+        "processing_time": f"{time.time() - start_time:.2f} seconds",
+        "last_updated": datetime.now().isoformat()
+    }
     # Save results
+    # with open(results_file, 'w') as f:
+    #     json.dump({
+    #         "timeline": timeline,
+    #         "total_screenshots": len(images),
+    #         "processing_time": f"{time.time() - start_time:.2f} seconds",
+    #         "last_updated": datetime.now().isoformat()
+    #     }, f, indent=4)
+    try:
+        with open(results_file, 'r') as f:
+            existing_data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        existing_data = [] 
+    
+    existing_data.append(new_data)
+
     with open(results_file, 'w') as f:
-        json.dump({
-            "timeline": timeline,
-            "total_screenshots": len(images),
-            "processing_time": f"{time.time() - start_time:.2f} seconds",
-            "last_updated": datetime.now().isoformat()
-        }, f, indent=4)
+        json.dump(existing_data, f, indent=4)
 
     print(f"\nAnalysis complete in {time.time() - start_time:.2f} seconds")
     print(f"Results saved to {results_file}")
 
+    delete_folder(folder_path)
     return timeline
 
 
-async def main(submission_id, assignment_id, user_id, start_no, end_no):
+async def main(submission_id, assignment_id, user_id, total_screenshots):
     if not submission_id:
         raise ValueError("submission_id is required but not provided.")
 
     try:
-        start_no = int(start_no)
-        end_no = int(end_no)
+        total_screenshots = int(total_screenshots)
     except ValueError:
-        raise ValueError("start_no and end_no must be valid integers.")
+        raise ValueError("total_screenshots  must be valid integers.")
 
-    print(f"This is start: {start_no}")
-    print(f"This is end: {end_no}")
+    print(f"This is total screenshots: {total_screenshots}")
     # Configuration
     ASSIGNMENT_ID=submission_id
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # Replace with your actual API key
@@ -313,21 +337,24 @@ async def main(submission_id, assignment_id, user_id, start_no, end_no):
     print(f"BUCKET_NAME: {BUCKET_NAME}")
 
     # Download images from S3 before starting analysis
-    download_images_from_s3(BUCKET_NAME, SCREENSHOTS_FOLDER, PREFIX, start_no, end_no)
+    #download_images_from_s3(BUCKET_NAME, SCREENSHOTS_FOLDER, PREFIX, start_no, end_no)
 
+    batch_size = 10
+    for batch_start in range(0, total_screenshots, batch_size):
+        batch_end = min(batch_start + batch_size, total_screenshots) - 1
 
-    # Run analysis after downloading images
-    try:
-        timeline = await analyze_screenshots(
-            SCREENSHOTS_FOLDER,
-            OPENAI_API_KEY,
-            RESULTS_FILE,
-            IMAGE_RANGE,
-            MAX_CONCURRENT_REQUESTS
-        )
-    except Exception as e:
-        print(f"Error analyzing screenshots: {e}")
-        timeline = []  # In case of failure, ensure you still return an empty timeline
+        download_images_from_s3(BUCKET_NAME, SCREENSHOTS_FOLDER, PREFIX, batch_start, batch_end)
+        try:
+            timeline = await analyze_screenshots(
+                SCREENSHOTS_FOLDER,
+                OPENAI_API_KEY,
+                RESULTS_FILE,
+                IMAGE_RANGE,
+                MAX_CONCURRENT_REQUESTS
+            )
+        except Exception as e:
+            print(f"Error analyzing screenshots: {e}")
+            timeline = []  # In case of failure, ensure you still return an empty timeline
 
     try:
         await timeline_analysis_main(submission_id, assignment_id, user_id)
