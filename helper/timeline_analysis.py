@@ -19,8 +19,10 @@ def clean_json_string(json_str):
 
 def analyze_timeline_file(file_path):
     # Read the JSON file
+    print(f"Analyzing file path : {file_path}")
     with open(file_path, 'r') as file:
         data = json.load(file)
+        print(f"Data in json file of timeline : {data}")
         timeline_data = data.get("timeline", [])  # Get timeline as list, empty list if not found
 
     # Calculate time interval from first two entries
