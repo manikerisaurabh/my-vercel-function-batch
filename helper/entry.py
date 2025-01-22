@@ -307,6 +307,7 @@ async def analyze_screenshots(
     print(f"Results saved to {results_file}")
 
     delete_folder(folder_path)
+    print(f"Deleted folder: {folder_path}")
     return timeline
 
 
