@@ -317,7 +317,7 @@ async def main(submission_id, assignment_id, user_id):
         merged_prompts = await merge_prompts_with_gpt4(raw_prompts_data, OPENAI_API_KEY)
         
         # Save merged prompts
-        merged_prompts_file = f"{submission_folder}/{assignment_id}_{user_id}_ai_prompt.json"
+        merged_prompts_file = f"{submission_folder}/{assignment_id}_{user_id}_ai_prompts.json"
         with open(merged_prompts_file, "w") as f:
             json.dump(merged_prompts, f, indent=2)
         print(f"Merged prompts saved to {merged_prompts_file}")
