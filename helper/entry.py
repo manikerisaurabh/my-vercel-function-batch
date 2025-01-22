@@ -343,7 +343,6 @@ async def main(submission_id, assignment_id, user_id, total_screenshots):
     batch_size = 10
     for batch_start in range(0, total_screenshots, batch_size):
         batch_end = min(batch_start + batch_size, total_screenshots) - 1
-
         download_images_from_s3(BUCKET_NAME, SCREENSHOTS_FOLDER, PREFIX, batch_start, batch_end)
         try:
             timeline = await analyze_screenshots(
