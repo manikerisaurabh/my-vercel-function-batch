@@ -370,6 +370,10 @@ async def main(submission_id, assignment_id, user_id):
         analyzed_app_actions_file = f"{submission_folder}/{assignment_id}_{user_id}_timeline_summary.json"
         with open(analyzed_app_actions_file, "w") as f:
             json.dump(analyzed_app_actions, f, indent=2)
+            
+        with open(analyzed_app_actions_file, "r") as f:
+            actual_data = json.load(f)
+            print(f"Data in analyzed app actions file : {actual_data}")
         print(f"Analyzed app actions saved to {analyzed_app_actions_file}")
     except Exception as e:
         print(f"Error analyzing app actions: {str(e)}")
