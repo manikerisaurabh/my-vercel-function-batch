@@ -10,27 +10,27 @@ from helper.upload_to_S3 import main as upload_to_S3_main  # Import the function
 
 
 def merge_timelines(data):
-    merged_timeline = {
-        "timeline": [],
-        "total_screenshots": 0,
-        "processing_time": "",
-        "last_updated": datetime.utcnow().isoformat()
+    # Combine multiple timeline entries into a single object
+    merged_timeline = []
+    total_screenshots = 0
+    processing_time = "0 seconds"
+    last_updated = None
+
+    for entry in data:
+        # Add all timeline objects to the merged timeline
+        merged_timeline.extend(entry.get("timeline", []))
+        # Accumulate total screenshots
+        total_screenshots += entry.get("total_screenshots", 0)
+        # Use the latest processing time and last_updated timestamp
+        processing_time = entry.get("processing_time", processing_time)
+        last_updated = entry.get("last_updated", last_updated)
+
+    return {
+        "timeline": merged_timeline,
+        "total_screenshots": total_screenshots,
+        "processing_time": processing_time,
+        "last_updated": last_updated
     }
-
-    for item in data:
-        # Merge timelines
-        merged_timeline["timeline"].extend(item["timeline"])
-        # Sum total screenshots
-        merged_timeline["total_screenshots"] += item.get("total_screenshots", 0)
-
-    # Calculate processing time (example based on average of individual times)
-    processing_times = [
-        float(item["processing_time"].split()[0]) for item in data if "processing_time" in item
-    ]
-    merged_timeline["processing_time"] = f"{sum(processing_times) / len(processing_times):.2f} seconds"
-
-    return merged_timeline
-
 
 
 def clean_json_string(json_str):
@@ -49,9 +49,10 @@ def analyze_timeline_file(file_path):
         data = json.load(file)
         print(f"Data in json file of timeline : {data}")
         singleData = merge_timelines(data)
+        print("z")
         print(f"single data {singleData}")
         timeline_data = singleData.get("timeline", [])  # Get timeline as list, empty list if not found
-
+        print("x")
     # Calculate time interval from first two entries
     time_interval = 5  # default fallback value
     if len(timeline_data) >= 2:
@@ -62,7 +63,7 @@ def analyze_timeline_file(file_path):
             print(f"Detected time interval between entries: {time_interval} seconds")
         except (KeyError, TypeError) as e:
             print(f"Warning: Could not calculate time interval, using default - {str(e)}")
-
+    print("c")
     # Initialize counters and lists
     activities = []
     prompts_with_time = []
