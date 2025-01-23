@@ -202,10 +202,11 @@ def save_app_actions(file_path, output, assignment_id, user_id, submission_id):
     
     app_actions_timeline = []
     previous_entry = None
-    
+    print(f"file path : {file_path}")
     # Read the original timeline data again
     with open(file_path, 'r') as file:
         data = json.load(file)
+        print(f"Data in json file of timeline at save_app_actions : {data}")
         timeline_data = data.get("timeline", [])
     
     # Process through the timeline data
