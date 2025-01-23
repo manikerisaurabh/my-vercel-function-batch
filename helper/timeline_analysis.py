@@ -207,7 +207,9 @@ def save_app_actions(file_path, output, assignment_id, user_id, submission_id):
     with open(file_path, 'r') as file:
         data = json.load(file)
         print(f"Data in json file of timeline at save_app_actions : {data}")
-        timeline_data = data.get("timeline", [])
+        filtered_data = merge_timelines(data)
+        print(f"filtered data : {filtered_data}")
+        timeline_data = filtered_data.get("timeline", [])
     
     # Process through the timeline data
     for entry in timeline_data:
