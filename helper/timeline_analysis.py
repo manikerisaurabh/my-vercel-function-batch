@@ -67,22 +67,22 @@ def analyze_timeline_file(file_path):
     # Initialize counters and lists
     activities = []
     prompts_with_time = []
-
+    print(f"timeline_data : {timeline_data}")
     # Process each timeline entry
     for entry in timeline_data:
         try:
             # Clean and parse the analysis JSON string
             analysis_str = clean_json_string(entry["analysis"])
             analysis = json.loads(analysis_str)
-
+            print("v")
             # Extract activity for counting
             activity = analysis["activity"]
             activities.append(activity)
-
+            print("b")
             # Extract prompts with timestamps
             time_from_start = entry["time_from_start"]
             windows = analysis["open_windows"]
-
+            print("n")
             for window in windows:
                 if "prompt" in window and window["prompt"]:  # Only include non-empty prompts
                     prompts_with_time.append({
