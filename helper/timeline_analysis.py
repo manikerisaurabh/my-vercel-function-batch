@@ -101,7 +101,7 @@ def analyze_timeline_file(file_path):
     # Create final output
     output = {
         "activity_durations": activity_durations,
-        "prompts_timeline": prompts_with_time
+        "prompts_timeline": prompts_with_time,
         "metadata": {
             "total_screenshots": singleData.get("total_screenshots"),
             "processing_time": singleData.get("processing_time"),
