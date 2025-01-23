@@ -286,7 +286,7 @@ async def merge_prompts_with_gpt4(prompts_data: dict, api_key: str) -> dict:
 async def analyze_app_actions_with_o1(app_actions_data: dict, api_key: str) -> dict:
     """Analyze app actions timeline using GPT-4 to merge similar activities"""
     client = AsyncOpenAI(api_key=api_key)
-    
+    print(f"App actions data: {app_actions_data}")
     try:
         response = await client.chat.completions.create(
             model="o1-preview",
@@ -365,7 +365,7 @@ async def main(submission_id, assignment_id, user_id):
             app_actions_data = json.load(f)
 
         analyzed_app_actions = await analyze_app_actions_with_o1(app_actions_data, OPENAI_API_KEY)
-
+        print(f"App actions analysis completed successfully: {analyzed_app_actions}")
         # Save analyzed app actions
         analyzed_app_actions_file = f"{submission_folder}/{assignment_id}_{user_id}_timeline_summary.json"
         with open(analyzed_app_actions_file, "w") as f:
