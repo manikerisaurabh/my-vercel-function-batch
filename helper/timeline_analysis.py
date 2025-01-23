@@ -8,6 +8,30 @@ from openai import AsyncOpenAI
 from helper.upload_to_S3 import main as upload_to_S3_main  # Import the function from upload.py
 
 
+def merge_timelines(data):
+    merged_timeline = {
+        "timeline": [],
+        "total_screenshots": 0,
+        "processing_time": "",
+        "last_updated": datetime.utcnow().isoformat()
+    }
+
+    for item in data:
+        # Merge timelines
+        merged_timeline["timeline"].extend(item["timeline"])
+        # Sum total screenshots
+        merged_timeline["total_screenshots"] += item.get("total_screenshots", 0)
+
+    # Calculate processing time (example based on average of individual times)
+    processing_times = [
+        float(item["processing_time"].split()[0]) for item in data if "processing_time" in item
+    ]
+    merged_timeline["processing_time"] = f"{sum(processing_times) / len(processing_times):.2f} seconds"
+
+    return merged_timeline
+
+
+
 def clean_json_string(json_str):
     # Remove the ```json prefix and ``` suffix if present
     if json_str.startswith("```json\n"):
@@ -23,7 +47,7 @@ def analyze_timeline_file(file_path):
     with open(file_path, 'r') as file:
         data = json.load(file)
         print(f"Data in json file of timeline : {data}")
-        singleData = data[0]
+        singleData = merge_timelines(data)
         print(f"single data {singleData}")
         timeline_data = singleData.get("timeline", [])  # Get timeline as list, empty list if not found
 
