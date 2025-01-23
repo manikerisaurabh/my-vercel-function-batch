@@ -23,7 +23,7 @@ def analyze_timeline_file(file_path):
     with open(file_path, 'r') as file:
         data = json.load(file)
         print(f"Data in json file of timeline : {data}")
-        timeline_data = data.get("timeline", [])  # Get timeline as list, empty list if not found
+        timeline_data = data[0].get("timeline", [])  # Get timeline as list, empty list if not found
 
     # Calculate time interval from first two entries
     time_interval = 5  # default fallback value
