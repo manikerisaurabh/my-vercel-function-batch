@@ -92,12 +92,12 @@ def analyze_timeline_file(file_path):
         except Exception as e:
             print(f"Warning: Error processing entry - {str(e)}")
             continue
-
+    print("m")
     # Count activities and multiply by dynamic time interval
     activity_durations = {
         activity: count * time_interval for activity, count in Counter(activities).items()
     }
-
+    print("l")
     # Create final output
     output = {
         "activity_durations": activity_durations,
@@ -328,6 +328,7 @@ async def main(submission_id, assignment_id, user_id):
     # Analyze the timeline file
     try:
         analysis_output = analyze_timeline_file(file_path)
+        print(f"Timeline analysis completed successfully: {analysis_output}")
     except Exception as e:
         print(f"Error analyzing timeline file: {str(e)}")
         return
